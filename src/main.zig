@@ -16,11 +16,16 @@ pub fn main() !void {
     }
 
     var pattern: []const u8 = undefined;
-    var pattern_lps: []u32 = undefined;
+    var lps_table: []usize = undefined;
+
+    var arena = heap.ArenaAllocator.init(heap.page_allocator);
+    defer arena.deinit();
+    const arena_alloc = arena.allocator();
 
     if (args_iterator.next()) |cli_pattern| {
         pattern = cli_pattern;
-        pattern_lps = compute_lps(pattern);
+        lps_table = try arena_alloc.alloc(usize, pattern.len);
+        compute_lps(pattern, lps_table);
     } else {
         return;
     }
@@ -68,7 +73,7 @@ pub fn main() !void {
 
         offset += bytes_read;
 
-        try grep(buf, &results, "sit");
+        try grep(buf, &results, pattern, lps_table);
 
         allocator.free(buf);
     }
@@ -101,8 +106,27 @@ fn compute_lps(pattern: []const u8, lps_table: []usize) void {
     }
 }
 
-fn grep(buf: []u8, _: *const [][]u8, _: []const u8) !void {
-    std.debug.print("{s} {d}\n", .{ buf, buf.len });
+fn grep(text_buf: []u8, _: *const [][]u8, pattern: []const u8, lps_table: []const usize) !void {
+    var pattern_idx: usize = 0;
+    var text_idx: usize = 0;
+
+    while (text_idx < text_buf.len) {
+        if (pattern[pattern_idx] == text_buf[text_idx]) {
+            pattern_idx += 1;
+            text_idx += 1;
+
+            // we found a match
+            if (pattern_idx == pattern.len) {
+                pattern_idx = 0;
+                std.debug.print("found a pattern!\n", .{});
+            }
+        } else if (pattern_idx > 0) {
+            pattern_idx = lps_table[pattern_idx - 1];
+        } else {
+            pattern_idx = 0;
+            text_idx += 1;
+        }
+    }
 }
 
 // TODO: test case sensitivity
