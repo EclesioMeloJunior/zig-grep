@@ -15,28 +15,28 @@ pub fn main() !void {
         return;
     }
 
-    var pattern: []const u8 = undefined;
-    var lps_table: []usize = undefined;
-
     var arena = heap.ArenaAllocator.init(heap.page_allocator);
     defer arena.deinit();
     const arena_alloc = arena.allocator();
 
+    var pattern: []const u8 = undefined;
     if (args_iterator.next()) |cli_pattern| {
         pattern = cli_pattern;
-        lps_table = try arena_alloc.alloc(usize, pattern.len);
-        compute_lps(pattern, lps_table);
     } else {
         return;
     }
 
-    const max_size: usize = 1024;
-    var fixed_buffer: [max_size]u8 = undefined;
+    var file_path: []const u8 = undefined;
+    if (args_iterator.next()) |cli_file_path| {
+        file_path = cli_file_path;
+    } else {
+        return;
+    }
 
-    var fixed_size_alloc = heap.FixedBufferAllocator.init(&fixed_buffer);
-    const allocator = fixed_size_alloc.allocator();
+    var lps_table = try arena_alloc.alloc(usize, pattern.len);
+    compute_lps(pattern, lps_table);
 
-    const file = try fs.openFileAbsolute("/Users/eclesiojunior/proj/zig-grep/examples/file.txt", fs.File.OpenFlags{
+    const file = try fs.openFileAbsolute(file_path, fs.File.OpenFlags{
         .mode = fs.File.OpenMode.read_only,
     });
     defer file.close();
@@ -44,9 +44,13 @@ pub fn main() !void {
     var file_metadata = try file.metadata();
     var file_size = file_metadata.size();
 
-    var offset: usize = 0;
-    var results: [][]u8 = undefined;
+    const max_size: usize = 1024;
+    var fixed_buffer: [max_size]u8 = undefined;
 
+    var fixed_size_alloc = heap.FixedBufferAllocator.init(&fixed_buffer);
+    const allocator = fixed_size_alloc.allocator();
+
+    var offset: usize = 0;
     while (true) {
         const amount_to_read = file_size - offset;
 
@@ -72,8 +76,7 @@ pub fn main() !void {
         }
 
         offset += bytes_read;
-
-        try grep(buf, &results, pattern, lps_table);
+        try grep(buf, pattern, lps_table);
 
         allocator.free(buf);
     }
@@ -106,7 +109,7 @@ fn compute_lps(pattern: []const u8, lps_table: []usize) void {
     }
 }
 
-fn grep(text_buf: []u8, _: *const [][]u8, pattern: []const u8, lps_table: []const usize) !void {
+fn grep(text_buf: []u8, pattern: []const u8, lps_table: []const usize) !void {
     var pattern_idx: usize = 0;
     var text_idx: usize = 0;
 
@@ -120,8 +123,7 @@ fn grep(text_buf: []u8, _: *const [][]u8, pattern: []const u8, lps_table: []cons
                 pattern_idx = 0;
 
                 var foward: usize = text_idx;
-                while (foward < text_buf.len)
-                {
+                while (foward < text_buf.len) {
                     if (text_buf[foward] == '\n' or ascii.isSpace(text_buf[foward])) {
                         break;
                     }
@@ -133,7 +135,7 @@ fn grep(text_buf: []u8, _: *const [][]u8, pattern: []const u8, lps_table: []cons
                 var backward: usize = text_idx - pattern.len;
                 while (backward > 0) {
                     if (text_buf[backward] == '\n' or ascii.isSpace(text_buf[backward])) {
-                        // since we are in a new line or a space character we should 
+                        // since we are in a new line or a space character we should
                         // remove it, so we increase the backward by one getting back
                         // to the place after the space
                         backward += 1;
@@ -143,7 +145,7 @@ fn grep(text_buf: []u8, _: *const [][]u8, pattern: []const u8, lps_table: []cons
                     backward -= 1;
                 }
 
-                std.debug.print("{s}\n", .{ text_buf[backward..foward] });
+                std.debug.print("{s}\n", .{text_buf[backward..foward]});
             }
         } else if (pattern_idx > 0) {
             pattern_idx = lps_table[pattern_idx - 1];

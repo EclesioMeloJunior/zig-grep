@@ -9,6 +9,7 @@ ex:
 zig build run -- sit
 ```
 
-- [ ] Provide the file as an CLI parameter
+- [x] Provide the file as an CLI parameter
+  - You should provide the file in the absolute format, for example: `/User/some_user_name/Documents/file.txt`
 - [ ] Ignore case sensitivy
 - [ ] Increase test coverage
