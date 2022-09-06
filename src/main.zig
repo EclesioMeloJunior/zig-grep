@@ -118,7 +118,22 @@ fn grep(text_buf: []u8, _: *const [][]u8, pattern: []const u8, lps_table: []cons
             // we found a match
             if (pattern_idx == pattern.len) {
                 pattern_idx = 0;
-                std.debug.print("found a pattern!\n", .{});
+
+                var foward: usize = text_idx;
+                while (foward < text_buf.len and
+                    !ascii.isSpace(text_buf[foward]) and
+                    text_buf[foward] != '\n') : (foward += 1)
+                {}
+
+                var backward: usize = text_idx - 1;
+                if (backward > 0) {
+                    while (backward > 0 and
+                        !ascii.isSpace(text_buf[backward]) and
+                        text_buf[backward] != '\n') : (backward -= 1)
+                    {}
+                }
+
+                std.debug.print("-> {s} {d}\n", .{ text_buf[backward..foward], text_buf[backward..foward].len });
             }
         } else if (pattern_idx > 0) {
             pattern_idx = lps_table[pattern_idx - 1];

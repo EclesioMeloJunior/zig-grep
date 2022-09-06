@@ -11,3 +11,4 @@ zig build run -- sit
 
 - [ ] Provide the file as an CLI parameter
 - [ ] Ignore case sensitivy
+- [ ] Ignore spaces and new lines when show the text
