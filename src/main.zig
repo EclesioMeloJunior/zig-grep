@@ -120,20 +120,30 @@ fn grep(text_buf: []u8, _: *const [][]u8, pattern: []const u8, lps_table: []cons
                 pattern_idx = 0;
 
                 var foward: usize = text_idx;
-                while (foward < text_buf.len and
-                    !ascii.isSpace(text_buf[foward]) and
-                    text_buf[foward] != '\n') : (foward += 1)
-                {}
+                while (foward < text_buf.len)
+                {
+                    if (text_buf[foward] == '\n' or ascii.isSpace(text_buf[foward])) {
+                        break;
+                    }
 
-                var backward: usize = text_idx - 1;
-                if (backward > 0) {
-                    while (backward > 0 and
-                        !ascii.isSpace(text_buf[backward]) and
-                        text_buf[backward] != '\n') : (backward -= 1)
-                    {}
+                    foward += 1;
                 }
 
-                std.debug.print("-> {s} {d}\n", .{ text_buf[backward..foward], text_buf[backward..foward].len });
+                // start from the begining of the text that matches the pattern
+                var backward: usize = text_idx - pattern.len;
+                while (backward > 0) {
+                    if (text_buf[backward] == '\n' or ascii.isSpace(text_buf[backward])) {
+                        // since we are in a new line or a space character we should 
+                        // remove it, so we increase the backward by one getting back
+                        // to the place after the space
+                        backward += 1;
+                        break;
+                    }
+
+                    backward -= 1;
+                }
+
+                std.debug.print("{s}\n", .{ text_buf[backward..foward] });
             }
         } else if (pattern_idx > 0) {
             pattern_idx = lps_table[pattern_idx - 1];
