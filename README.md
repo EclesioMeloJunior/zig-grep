@@ -6,7 +6,7 @@
 ex:
 
 ```
-zig build run -- sit
+zig build run -- ${text_to_find} ${absolute_file_path}
 ```
 
 - [x] Provide the file as an CLI parameter
