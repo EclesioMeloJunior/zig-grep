@@ -67,8 +67,8 @@ pub fn main() !void {
             break;
         }
 
-        if ((bytes_read + offset) < file_size and !ascii.isSpace(buf[buf.len - 1])) {
-            while (!ascii.isSpace(buf[bytes_read - 1])) {
+        if ((bytes_read + offset) < file_size and !ascii.isWhitespace(buf[buf.len - 1])) {
+            while (!ascii.isWhitespace(buf[bytes_read - 1])) {
                 bytes_read -= 1;
             }
 
@@ -124,7 +124,7 @@ fn grep(text_buf: []u8, pattern: []const u8, lps_table: []const usize) !void {
 
                 var foward: usize = text_idx;
                 while (foward < text_buf.len) {
-                    if (text_buf[foward] == '\n' or ascii.isSpace(text_buf[foward])) {
+                    if (text_buf[foward] == '\n' or ascii.isWhitespace(text_buf[foward])) {
                         break;
                     }
 
@@ -134,7 +134,7 @@ fn grep(text_buf: []u8, pattern: []const u8, lps_table: []const usize) !void {
                 // start from the begining of the text that matches the pattern
                 var backward: usize = text_idx - pattern.len;
                 while (backward > 0) {
-                    if (text_buf[backward] == '\n' or ascii.isSpace(text_buf[backward])) {
+                    if (text_buf[backward] == '\n' or ascii.isWhitespace(text_buf[backward])) {
                         // since we are in a new line or a space character we should
                         // remove it, so we increase the backward by one getting back
                         // to the place after the space
